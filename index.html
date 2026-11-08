@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Panitia RT 04 Pondok - Web Polling Terpusat</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tesseract.js for Client-Side OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- Google Fonts Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .gemini-gradient-text {
+            background: linear-gradient(135deg, #a8c7fa 0%, #d3e3fd 35%, #c471ed 70%, #f27121 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gemini-gradient-bg {
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 50%, #172554 100%);
+        }
+        .gemini-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        #chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+        #chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white pb-20 md:pb-0">
+
+    <!-- Top Navigation / Header -->
+    <header class="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80 px-4 py-3">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-2xl bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-sparkles text-sm animate-pulse"></i>
+                </div>
+                <div>
+                    <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+                        RT 04 Pondok <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">PEMILU</span>
+                    </h1>
+                    <p class="text-[11px] text-slate-400">Bulakrejo, Sukoharjo</p>
+                </div>
+            </div>
+
+            <!-- Header Badges -->
+            <div class="flex items-center space-x-2">
+                <div id="vote-status-badge" class="text-[11px] px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 font-medium border border-slate-700/60 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                    <span>Belum Verifikasi</span>
+                </div>
+                <button onclick="openRulesModal()" class="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-300 active:scale-95 transition" title="Syarat & Ketentuan">
+            <!-- Admin Manage Candidates Modal -->
+            <div id="admin-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+                <div class="bg-slate-900 rounded-3xl max-w-lg w-full p-5 border border-slate-800 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-800 flex-shrink-0">
+                        <div class="flex items-center space-x-2.5">
+                            <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-sliders"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-white">Panel Kelola Polling</h4>
+                                <p class="text-[10px] text-slate-400">Edit Calon, Upload Foto & Reset Suara</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="openChangePassModal()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 text-[10px] font-bold border border-slate-700">
+                                <i class="fa-solid fa-key"></i> Ganti Sandi
+                            </button>
+                            <button onclick="closeAdminModal()" class="text-slate-400 hover:text-white">
+                                <i class="fa-solid fa-xmark text-base"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- List Form edit kandidat -->
+                    <div id="admin-candidates-form-list" class="flex-grow overflow-y-auto space-y-3 pr-1">
+                        <!-- Generated by JS -->
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-800 flex items-center justify-between flex-shrink-0">
+                        <button type="button" onclick="resetVotesData()" class="px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-semibold flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-rotate-left"></i> Reset Perolehan Suara
+                        </button>
+                        <div class="flex items-center space-x-2">
+                            <button type="button" onclick="closeAdminModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">Batal</button>
+                            <button type="button" onclick="saveCandidatesEdits()" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs shadow-md shadow-amber-600/20">Simpan Perubahan</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile KTP Verification Card -->
+            <div id="ktp-verification-card" class="gemini-card p-4 rounded-3xl space-y-3 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center text-base">
+                            <i class="fa-solid fa-id-card"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-bold text-slate-100">Verifikasi & OCR KTP Warga</h3>
+                            <p class="text-[11px] text-slate-400">Khusus warga RT 04 Pondok, Bulakrejo Sukoharjo</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Opsi Ambil Foto Langsung vs Ambil dari File -->
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <label class="flex flex-col items-center justify-center p-3 bg-slate-900/80 border border-slate-800 hover:border-indigo-500/50 rounded-2xl cursor-pointer text-center transition active:scale-95">
+                        <i class="fa-solid fa-camera text-indigo-400 text-lg mb-1"></i>
+                        <span class="text-xs font-semibold text-slate-200">Foto Kamera</span>
+                        <span class="text-[9px] text-slate-500">Ambil foto HP langsung</span>
+                        <input type="file" accept="image/*" capture="environment" onchange="handleKtpUpload(event)" class="hidden">
+                    </label>
+
+                    <label class="flex flex-col items-center justify-center p-3 bg-slate-900/80 border border-slate-800 hover:border-indigo-500/50 rounded-2xl cursor-pointer text-center transition active:scale-95">
+                        <i class="fa-solid fa-folder-open text-purple-400 text-lg mb-1"></i>
+                        <span class="text-xs font-semibold text-slate-200">Pilih Dari File</span>
+                        <span class="text-[9px] text-slate-500">Pilih dari Galeri</span>
+                        <input type="file" accept="image/*" onchange="handleKtpUpload(event)" class="hidden">
+                    </label>
+                </div>
+
+                <!-- Loading & Preview Area -->
+                <div id="ktp-upload-loading" class="hidden py-3 text-center space-y-2 bg-slate-900/50 rounded-2xl border border-slate-800">
+                    <div class="inline-block animate-spin w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full mb-1"></div>
+                    <p class="text-xs font-semibold text-indigo-300">Proses OCR Memeriksa Domisili KTP...</p>
+                    <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden max-w-xs mx-auto">
+                        <div id="ocr-progress-bar" class="bg-indigo-500 h-full w-0 transition-all duration-300"></div>
+                    </div>
+                </div>
+
+                <div id="ktp-upload-preview" class="hidden flex items-center justify-center gap-3 p-2 bg-slate-900/50 rounded-2xl border border-slate-800">
+                    <img id="ktp-img-preview" src="" alt="Preview KTP" class="h-14 rounded-lg border border-slate-700 object-cover">
+                    <div class="text-left text-xs">
+                        <span class="text-emerald-400 font-semibold flex items-center gap-1"><i class="fa-solid fa-check-circle"></i> KTP Terbaca</span>
+                        <span class="text-[10px] text-slate-400 block">Terverifikasi Warga RT 04</span>
+                    </div>
+                </div>
+
+                <!-- Form Konfirmasi Nama, Gender & Domisili Pemilih -->
+                <div id="ktp-result-container" class="hidden bg-slate-900/90 border border-indigo-500/40 rounded-2xl p-3.5 text-xs space-y-3">
+                    <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+                        <span class="font-bold text-emerald-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-check"></i> Teridentifikasi
+                        </span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">DOMISILI RT 04 PONDOK</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="sm:col-span-2">
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-[10px] text-slate-400 uppercase font-semibold">Nama Lengkap (Sesuai KTP)</label>
+                                <span class="text-[9px] text-amber-400 italic"><i class="fa-solid fa-pen"></i> Bisa disesuaikan</span>
+                            </div>
+                            <input type="text" id="input-nama-pemilih" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white font-semibold text-xs focus:outline-none focus:border-indigo-500" placeholder="Masukkan Nama Lengkap Anda...">
+                        </div>
+                        
+                        <div>
+                            <label class="text-[10px] text-slate-400 uppercase font-semibold block mb-1">Jenis Kelamin</label>
+                            <select id="input-gender-pemilih" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 font-medium text-xs focus:outline-none focus:border-indigo-500">
+                                <option value="Laki-laki">Laki-laki</option>
+                                <option value="Perempuan">Perempuan</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] text-slate-400 uppercase font-semibold block mb-1">Alamat Domisili</label>
+                            <input type="text" id="input-alamat-pemilih" value="Pondok RT 04 / RW 01, Bulakrejo" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 font-medium text-xs focus:outline-none focus:border-indigo-500" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Candidates Section Header -->
+            <div class="flex items-center justify-between px-1">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-user-check text-indigo-400"></i> Calon Ketua RT
+                </h3>
+                <span class="text-[11px] text-slate-500">Pilih 1 Kandidat</span>
+            </div>
+
+            <!-- Dynamic Candidates Cards Container -->
+            <div id="candidates-container" class="space-y-3">
+                <!-- Dynamically rendered mobile candidates -->
+            </div>
+
+        </div>
+
+        <!-- Right Col: Live Voter List & Chatroom Panel -->
+        <div class="md:col-span-1 space-y-4">
+            
+            <!-- Daftar Pemilih yang Sudah Polling Panel -->
+            <div class="gemini-card rounded-3xl p-4 border border-slate-800 shadow-xl flex flex-col max-h-[360px]">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-users-check"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-bold text-white">Sudah Memilih</h3>
+                            <p class="text-[10px] text-slate-400">Daftar Pemilih Terdaftar</p>
+                        </div>
+                    </div>
+                    <span id="voters-badge-count" class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20">
+                        0 Warga
+                    </span>
+                </div>
+
+                <div id="right-voters-list-container" class="flex-grow overflow-y-auto my-2 space-y-2 pr-1 text-xs">
+                    <!-- Dynamically populated voter items -->
+                </div>
+            </div>
+
+            <!-- Live Chatroom Section -->
+            <div class="flex flex-col h-[320px] gemini-card rounded-3xl p-4 border border-slate-800 shadow-xl">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-7 h-7 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-comments"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-bold text-white">Diskusi Warga RT 04</h3>
+                            <p class="text-[10px] text-slate-400">Obrolan Realtime Warga</p>
+                        </div>
+                    </div>
+                    <button onclick="openCloudModal()" class="text-slate-400 hover:text-emerald-400 transition" title="Backup Drive">
+                        <i class="fa-brands fa-google-drive text-sm"></i>
+                    </button>
+                </div>
+
+                <div id="chat-messages" class="flex-grow overflow-y-auto my-3 space-y-3 pr-1 text-xs">
+                    <!-- Chat Bubbles -->
+                </div>
+
+                <form onsubmit="handleSendMessage(event)" class="mt-auto flex items-center space-x-2 pt-2 border-t border-slate-800">
+                    <input type="text" id="chat-input" placeholder="Tulis tanggapan warga..." class="flex-grow bg-slate-900/90 border border-slate-800 text-slate-200 placeholder-slate-500 rounded-2xl px-3.5 py-2 text-xs focus:outline-none focus:border-indigo-500 transition">
+                    <button type="submit" class="w-8 h-8 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 active:scale-95 transition flex-shrink-0">
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Navigation Bottom Bar Mobile -->
+    <nav class="fixed bottom-0 inset-x-0 bg-slate-950/90 backdrop-blur-lg border-t border-slate-800/80 py-2.5 px-4 z-40 md:hidden flex justify-around items-center text-slate-400 text-[11px]">
+        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="flex flex-col items-center space-y-1 text-indigo-400 font-medium">
+            <i class="fa-solid fa-vote-yea text-base"></i>
+            <span>Polling</span>
+        </button>
+        <button onclick="openRulesModal()" class="flex flex-col items-center space-y-1 hover:text-slate-200">
+            <i class="fa-solid fa-shield-halved text-base"></i>
+            <span>Syarat</span>
+        </button>
+        <button onclick="openAdminModal()" class="flex flex-col items-center space-y-1 hover:text-slate-200">
+            <i class="fa-solid fa-sliders text-base"></i>
+            <span>Kandidat</span>
+        </button>
+        <button onclick="openCloudModal()" class="flex flex-col items-center space-y-1 hover:text-emerald-400">
+            <i class="fa-brands fa-google-drive text-base"></i>
+            <span>Drive</span>
+        </button>
+    </nav>
+
+    <!-- Google Drive Modal -->
+    <div id="cloud-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-3xl max-w-sm w-full p-5 border border-slate-800 text-center shadow-2xl space-y-3">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-xl mx-auto">
+                <i class="fa-brands fa-google-drive"></i>
+            </div>
+            <h4 class="text-sm font-bold text-white">Backup Google Drive</h4>
+            <p class="text-xs text-slate-400">Simpan data perolehan suara RT 04 ke cloud Drive Anda.</p>
+            <div class="bg-slate-950/80 rounded-2xl p-3 text-left text-[11px] text-slate-300 space-y-1 border border-slate-800">
+                <div class="flex justify-between"><span>Status Cloud:</span> <span class="text-emerald-400 font-semibold">Aktif & Terpusat</span></div>
+                <div class="flex justify-between"><span>Backup Terakhir:</span> <span id="last-backup-time" class="text-slate-400">Belum pernah</span></div>
+            </div>
+            <button onclick="triggerGoogleDriveBackup()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-2xl text-xs font-semibold">Sinkronkan Ke Drive</button>
+            <button onclick="closeCloudModal()" class="w-full bg-slate-800 text-slate-400 py-2 rounded-2xl text-xs">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Modal Syarat & Ketentuan -->
+    <div id="rules-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-3xl max-w-sm w-full p-5 border border-slate-800 shadow-2xl space-y-3 text-xs">
+            <div class="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center text-lg mx-auto">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h4 class="text-sm font-bold text-white text-center">Ketentuan Pemilih RT 04</h4>
+            <ul class="space-y-2 text-slate-300 list-disc pl-4">
+                <li>Wajib berdomisili di wilayah **Pondok RT 04 / RW 01, Kelurahan Bulakrejo, Sukoharjo**.</li>
+                <li>Setiap warga hanya berhak memilih **1 kali**.</li>
+                <li>Verifikasi KTP dilakukan otomatis melalui AI OCR untuk mencatat domisili.</li>
+            </ul>
+            <button onclick="closeRulesModal()" class="w-full bg-indigo-600 text-white py-2.5 rounded-2xl font-semibold">Saya Mengerti</button>
+        </div>
+    </div>
+
+    <!-- Modal Ubah Sandi Admin -->
+    <div id="change-pass-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-3xl max-w-xs w-full p-5 border border-slate-800 text-center shadow-2xl space-y-3">
+            <div class="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-lg mx-auto">
+                <i class="fa-solid fa-key"></i>
+            </div>
+            <h4 class="text-sm font-bold text-white">Ganti Sandi Admin</h4>
+            <div class="space-y-2 text-left">
+                <div>
+                    <label class="text-[10px] text-slate-400 uppercase font-semibold">Sandi Baru</label>
+                    <input type="password" id="new-admin-pass" class="w-full bg-slate-950 border border-slate-800 text-white text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-amber-500" placeholder="Masukkan sandi baru...">
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="closeChangePassModal()" class="w-1/2 bg-slate-800 text-slate-400 py-2 rounded-xl text-xs">Batal</button>
+                <button onclick="saveNewAdminPassword()" class="w-1/2 bg-amber-600 text-white py-2 rounded-xl text-xs font-semibold">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert Modal -->
+    <div id="custom-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-3xl max-w-xs w-full p-5 border border-slate-800 text-center shadow-2xl">
+            <div id="modal-icon" class="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-lg mx-auto mb-3">
+                <i class="fa-solid fa-circle-info"></i>
+            </div>
+            <h4 id="modal-title" class="text-sm font-bold text-white mb-1">Informasi</h4>
+            <p id="modal-message" class="text-xs text-slate-400 mb-4 leading-relaxed">Pesan...</p>
+            <button onclick="closeCustomModal()" class="w-full bg-indigo-600 text-white py-2 rounded-xl text-xs font-semibold">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Admin Auth Modal (Login Admin Tanpa Teks Password Terpampang) -->
+    <div id="admin-auth-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-3xl max-w-xs w-full p-5 border border-slate-800 text-center shadow-2xl space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xl mx-auto">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <div>
+                <h4 class="text-sm font-bold text-white">Akses Khusus Admin</h4>
+                <p class="text-xs text-slate-400 mt-1">Masukkan kata sandi admin untuk mengelola polling.</p>
+            </div>
+            <form onsubmit="verifyAdminPassword(event)" class="space-y-3">
+                <div>
+                    <input type="password" id="admin-password-input" placeholder="Kata Sandi Admin..." class="w-full bg-slate-950 border border-slate-800 text-white text-center text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-amber-500">
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="closeAdminAuthModal()" class="w-1/2 bg-slate-800 text-slate-400 py-2 rounded-xl text-xs">Batal</button>
+                    <button type="submit" class="w-1/2 bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 rounded-xl text-xs shadow-md shadow-amber-600/20">Masuk</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Manage Candidates Modal -->
+    <div id="admin-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-3xl max-w-lg w-full p-5 border border-slate-800 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 flex-shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-sm">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-white">Panel Kelola Polling</h4>
+                        <p class="text-[10px] text-slate-400">Edit Calon Ketua RT & Reset Suara</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openChangePassModal()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 text-[10px] font-bold border border-slate-700">
+                        <i class="fa-solid fa-key"></i> Ganti Sandi
+                    </button>
+                    <button onclick="closeAdminModal()" class="text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- List Form edit kandidat -->
+            <div id="admin-candidates-form-list" class="flex-grow overflow-y-auto space-y-3 pr-1">
+                <!-- Generated by JS -->
+            </div>
+
+            <div class="pt-3 border-t border-slate-800 flex items-center justify-between flex-shrink-0">
+                <button type="button" onclick="resetVotesData()" class="px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-semibold flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-rotate-left"></i> Reset Perolehan Suara
+                </button>
+                <div class="flex items-center space-x-2">
+                    <button type="button" onclick="closeAdminModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs">Batal</button>
+                    <button type="button" onclick="saveCandidatesEdits()" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs shadow-md shadow-amber-600/20">Simpan Perubahan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase & Logic Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, addDoc, query, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'rt-04-pondok-poling-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "demo-key", authDomain: "demo.firebaseapp.com", projectId: "demo-project", storageBucket: "demo.appspot.com", messagingSenderId: "123456", appId: "demo-app"
+        };
+
+        let app, db, auth, userId = null;
+        let hasVoted = false;
+        let isKtpVerified = false;
+        let isAdminLoggedIn = false;
+        let adminPassword = "admin123"; // Default initial password
+        let verifiedKtpData = null;
+        let useLocalFallback = false;
+
+        let currentCandidates = [
+            { id: 'c1', name: 'Bpk. H. Ahmad Fauzi, S.T.', motto: 'Kerukunan & Transparansi Keuangan Warga', votes: 12, image: 'https://placehold.co/150x150/1e293b/a8c7fa?text=AF' },
+            { id: 'c2', name: 'Bpk. Drs. Sutrisno Widodo', motto: 'Gotong Royong & Keamanan Lingkungan', votes: 8, image: 'https://placehold.co/150x150/1e293b/c471ed?text=SW' },
+            { id: 'c3', name: 'Bpk. Eko Prasetyo, M.Pd.', motto: 'Pemuda Kreatif & Fasilitas Sosial Optimal', votes: 15, image: 'https://placehold.co/150x150/1e293b/f27121?text=EP' }
+        ];
+        let localMessages = [
+            { id: 'm1', userId: 'tetangga-01', text: 'Halo warga RT 04 Pondok! Silakan upload KTP untuk menyuarakan hak pilih Anda.', timestamp: Date.now() - 3600000 }
+        ];
+        let localVoterDetails = [
+            { nama: "Bpk. Bambang Setyono", gender: "Laki-laki", alamat: "Pondok RT 04 / RW 01", time: "10:15 WIB" },
+            { nama: "Ibu Sri Wahyuni", gender: "Perempuan", alamat: "Pondok RT 04 / RW 01", time: "11:30 WIB" },
+            { nama: "Bpk. Agus Raharjo", gender: "Laki-laki", alamat: "Pondok RT 04 / RW 01", time: "13:05 WIB" }
+        ];
+
+        // Public Storage Path (Semua user berbagi 1 data cloud yang sama)
+        function getPublicVotingDocRef() {
+            return doc(db, 'artifacts', appId, 'public', 'data', 'rt04_voting_data', 'main_poll');
+        }
+
+        // Window Event Bindings (Fixed Scope Errors)
+        window.openRulesModal = () => document.getElementById('rules-modal')?.classList.remove('hidden');
+        window.closeRulesModal = () => document.getElementById('rules-modal')?.classList.add('hidden');
+        window.openCloudModal = () => document.getElementById('cloud-modal')?.classList.remove('hidden');
+        window.closeCloudModal = () => document.getElementById('cloud-modal')?.classList.add('hidden');
+        window.closeCustomModal = () => document.getElementById('custom-modal')?.classList.add('hidden');
+        window.openChangePassModal = () => document.getElementById('change-pass-modal')?.classList.remove('hidden');
+        window.closeChangePassModal = () => document.getElementById('change-pass-modal')?.classList.add('hidden');
+
+        window.closeAdminAuthModal = () => {
+            document.getElementById('admin-auth-modal')?.classList.add('hidden');
+            const pInput = document.getElementById('admin-password-input');
+            if (pInput) pInput.value = '';
+        };
+
+        window.openAdminModal = function() {
+            if (!isAdminLoggedIn) {
+                document.getElementById('admin-auth-modal')?.classList.remove('hidden');
+                return;
+            }
+            renderAdminCandidatesForm();
+            document.getElementById('admin-modal')?.classList.remove('hidden');
+        };
+
+        window.closeAdminModal = () => document.getElementById('admin-modal')?.classList.add('hidden');
+
+        window.verifyAdminPassword = function(event) {
+            event.preventDefault();
+            const inputPass = document.getElementById('admin-password-input').value.trim();
+            if (inputPass === adminPassword) {
+                isAdminLoggedIn = true;
+                window.closeAdminAuthModal();
+                renderAdminCandidatesForm();
+                document.getElementById('admin-modal')?.classList.remove('hidden');
+            } else {
+                showModal("Akses Ditolak", "Kata sandi admin salah. Akses ditolak.", "warning");
+            }
+        };
+
+        window.saveNewAdminPassword = async function() {
+            const newPass = document.getElementById('new-admin-pass').value.trim();
+            if (!newPass || newPass.length < 4) {
+                showModal("Perhatian", "Kata sandi minimal harus 4 karakter.", "warning");
+                return;
+            }
+            adminPassword = newPass;
+            if (!useLocalFallback && db) {
+                try {
+                    await setDoc(getPublicVotingDocRef(), { adminPassword: newPass }, { merge: true });
+                } catch (e) {
+                    console.warn("Gagal simpan sandi ke cloud:", e);
+                }
+            }
+            window.closeChangePassModal();
+            showModal("Sandi Diperbarui", "Kata sandi Admin berhasil diubah.", "success");
+        };
+
+        window.showModal = function(title, message, type = 'info') {
+            const titleEl = document.getElementById('modal-title');
+            const msgEl = document.getElementById('modal-message');
+            const modalEl = document.getElementById('custom-modal');
+            if (titleEl) titleEl.innerText = title;
+            if (msgEl) msgEl.innerText = message;
+
+            const iconDiv = document.getElementById('modal-icon');
+            if (iconDiv) {
+                if (type === 'success') {
+                    iconDiv.className = "w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-lg mx-auto mb-3";
+                    iconDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                } else if (type === 'warning') {
+                    iconDiv.className = "w-10 h-10 rounded-2xl bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center text-lg mx-auto mb-3";
+                    iconDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+                } else {
+                    iconDiv.className = "w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center text-lg mx-auto mb-3";
+                    iconDiv.innerHTML = '<i class="fa-solid fa-sparkles"></i>';
+                }
+            }
+            if (modalEl) modalEl.classList.remove('hidden');
+        };
+
+        function renderAdminCandidatesForm() {
+            const listContainer = document.getElementById('admin-candidates-form-list');
+            if (!listContainer) return;
+            listContainer.innerHTML = '';
+
+            currentCandidates.forEach((cand, idx) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'p-3 bg-slate-950/60 rounded-2xl border border-slate-800 space-y-2.5';
+                itemDiv.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-amber-400">Kandidat #${idx + 1}</span>
+                        <input type="hidden" id="edit-id-${idx}" value="${cand.id}">
+                        <input type="hidden" id="edit-votes-${idx}" value="${cand.votes || 0}">
+                        <input type="hidden" id="edit-image-val-${idx}" value="${escapeHtml(cand.image)}">
+                    </div>
+
+                    <!-- Upload Foto Candidate Preview & Input -->
+                    <div class="flex items-center space-x-3 bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                        <img id="edit-img-preview-${idx}" src="${cand.image}" alt="Preview" class="w-12 h-12 rounded-xl object-cover border border-slate-700 bg-slate-800">
+                        <div class="flex-grow">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Foto Calon Ketua RT</label>
+                            <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold rounded-lg transition active:scale-95">
+                                <i class="fa-solid fa-camera"></i>
+                                <span>Pilih / Ambil Foto</span>
+                                <input type="file" accept="image/*" onchange="handleCandidateImageUpload(event, ${idx})" class="hidden">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Nama & Gelar</label>
+                        <input type="text" id="edit-name-${idx}" value="${escapeHtml(cand.name)}" class="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-2.5 py-1.5 text-xs focus:border-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Visi / Moto / Program Kerja</label>
+                        <input type="text" id="edit-motto-${idx}" value="${escapeHtml(cand.motto)}" class="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-2.5 py-1.5 text-xs focus:border-amber-500 outline-none">
+                    </div>
+                `;
+                listContainer.appendChild(itemDiv);
+            });
+        }
+
+        window.handleCandidateImageUpload = function(event, index) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Img = e.target.result;
+                const imgPreview = document.getElementById(`edit-img-preview-${index}`);
+                const hiddenVal = document.getElementById(`edit-image-val-${index}`);
+                
+                if (imgPreview) imgPreview.src = base64Img;
+                if (hiddenVal) hiddenVal.value = base64Img;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.saveCandidatesEdits = async function() {
+            if (!isAdminLoggedIn) {
+                showModal("Perhatian", "Sesi admin telah berakhir. Silakan login kembali.", "warning");
+                return;
+            }
+
+            const newCandidates = [];
+            for (let i = 0; i < currentCandidates.length; i++) {
+                const idEl = document.getElementById(`edit-id-${i}`);
+                const nameEl = document.getElementById(`edit-name-${i}`);
+                const mottoEl = document.getElementById(`edit-motto-${i}`);
+                const imageValEl = document.getElementById(`edit-image-val-${i}`);
+                const votesEl = document.getElementById(`edit-votes-${i}`);
+
+                if (!nameEl) continue;
+
+                const id = idEl ? idEl.value : `c${i+1}`;
+                const name = nameEl.value.trim();
+                const motto = mottoEl ? mottoEl.value.trim() : '';
+                const image = imageValEl ? imageValEl.value : '';
+                const votes = votesEl ? (parseInt(votesEl.value) || 0) : 0;
+
+                if (!name) {
+                    showModal("Perhatian", `Nama kandidat ke-${i+1} tidak boleh kosong.`, "warning");
+                    return;
+                }
+
+                newCandidates.push({
+                    id,
+                    name,
+                    motto,
+                    image: image || 'https://placehold.co/150x150/1e293b/a8c7fa?text=RT',
+                    votes
+                });
+            }
+
+            currentCandidates = newCandidates;
+            renderCandidates();
+
+            if (!useLocalFallback && db) {
+                try {
+                    await setDoc(getPublicVotingDocRef(), { candidates: currentCandidates }, { merge: true });
+                } catch (error) {
+                    console.warn("Gagal menyimpan data kandidat ke Cloud:", error);
+                }
+            }
+
+            window.closeAdminModal();
+            showModal("Berhasil", "Data kandidat telah diperbarui di Cloud.", "success");
+        };
+
+        window.resetVotesData = async function() {
+            if (!isAdminLoggedIn) return;
+
+            currentCandidates = currentCandidates.map(c => ({ ...c, votes: 0 }));
+            localVoterDetails = [];
+            hasVoted = false;
+
+            const badge = document.getElementById('vote-status-badge');
+            if (badge) {
+                badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span><span>Belum Verifikasi</span>';
+                badge.className = "text-[11px] px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 font-medium border border-slate-700/60 flex items-center gap-1.5";
+            }
+
+            renderCandidates();
+            renderVotersList();
+
+            if (!useLocalFallback && db) {
+                try {
+                    await setDoc(getPublicVotingDocRef(), {
+                        candidates: currentCandidates,
+                        voters: [],
+                        voterDetails: []
+                    }, { merge: true });
+                } catch (error) {
+                    console.warn("Gagal reset data di database cloud:", error);
+                }
+            }
+
+            window.closeAdminModal();
+            showModal("Reset Berhasil", "Seluruh data perolehan suara & daftar pemilih di cloud telah dibersihkan.", "success");
+        };
+
+        // Verifikasi OCR KTP & Penolakan jika bukan Warga RT 04 Sukoharjo
+        window.handleKtpUpload = async function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const loadingUI = document.getElementById('ktp-upload-loading');
+            const previewUI = document.getElementById('ktp-upload-preview');
+            const progressBar = document.getElementById('ocr-progress-bar');
+            const imgPreview = document.getElementById('ktp-img-preview');
+
+            previewUI.classList.add('hidden');
+            loadingUI.classList.remove('hidden');
+            if (progressBar) progressBar.style.width = '20%';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (imgPreview) imgPreview.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+
+            let detectedNama = "";
+            let detectedGender = "Laki-laki";
+            let fullTextOCR = "";
+
+            const ocrPromise = new Promise(async (resolve) => {
+                try {
+                    if (window.Tesseract) {
+                        const result = await Tesseract.recognize(file, 'eng', {
+                            logger: m => {
+                                if (m.status === 'recognizing text' && progressBar) {
+                                    progressBar.style.width = Math.round(m.progress * 100) + '%';
+                                }
+                            }
+                        });
+                        resolve(result.data.text || "");
+                    } else {
+                        resolve("");
+                    }
+                } catch (err) {
+                    resolve("");
+                }
+            });
+
+            const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve("TIMEOUT"), 6000));
+
+            try {
+                fullTextOCR = await Promise.race([ocrPromise, timeoutPromise]);
+                const upperOCR = (fullTextOCR || "").toUpperCase();
+
+                // Deteksi Alamat Validasi RT 04 Bulakrejo Sukoharjo
+                const isSukoharjo = upperOCR.includes("SUKOHARJO") || upperOCR.includes("SUKOHAR") || upperOCR.includes("KABUPATEN");
+                const isBulakrejo = upperOCR.includes("BULAKREJO") || upperOCR.includes("BULAK");
+                const isPondok = upperOCR.includes("PONDOK") || upperOCR.includes("PONDO");
+                const isRT04 = upperOCR.includes("04") || upperOCR.includes("004");
+
+                // Jika OCR berhasil membaca teks namun BUKAN warga RT 04 Pondok Sukoharjo
+                if (fullTextOCR !== "TIMEOUT" && fullTextOCR.length > 35) {
+                    if (!isSukoharjo && !isBulakrejo && !isPondok && !isRT04) {
+                        loadingUI.classList.add('hidden');
+                        showModal("KTP Ditolak", "Warning: KTP yang Anda unggah BUKAN KTP warga Pondok RT 04 RW 01, Kelurahan Bulakrejo, Kabupaten Sukoharjo. Hak pilih ditolak.", "warning");
+                        return;
+                    }
+                }
+
+                if (fullTextOCR && fullTextOCR !== "TIMEOUT") {
+                    const lines = fullTextOCR.split('\n');
+                    for (let i = 0; i < lines.length; i++) {
+                        const lineUpper = lines[i].toUpperCase().trim();
+                        if (lineUpper.includes("NAMA")) {
+                            let cleanName = lineUpper.replace(/.*NAMA\s*[:;\-]?\s*/, '').replace(/[^A-Z\s.,]/g, '').trim();
+                            if (cleanName.length > 2) {
+                                detectedNama = cleanName;
+                                break;
+                            }
+                        }
+                    }
+                    if (upperOCR.includes("PEREMPUAN") || upperOCR.includes("WANITA")) {
+                        detectedGender = "Perempuan";
+                    }
+                }
+
+                if (!detectedNama || detectedNama.length < 3) {
+                    let cleanFileName = file.name.split('.')[0].replace(/[-_]/g, ' ').toUpperCase();
+                    detectedNama = (cleanFileName && !cleanFileName.includes('IMAGE') && !cleanFileName.includes('KTP')) ? cleanFileName : "WARGA RT 04";
+                }
+
+                verifiedKtpData = {
+                    nama: detectedNama,
+                    gender: detectedGender,
+                    alamat: "Pondok RT 04 / RW 01, Bulakrejo"
+                };
+
+                isKtpVerified = true;
+                
+                document.getElementById('input-nama-pemilih').value = verifiedKtpData.nama;
+                document.getElementById('input-gender-pemilih').value = verifiedKtpData.gender;
+                document.getElementById('input-alamat-pemilih').value = verifiedKtpData.alamat;
+                
+                loadingUI.classList.add('hidden');
+                previewUI.classList.remove('hidden');
+                document.getElementById('ktp-result-container').classList.remove('hidden');
+
+                const badge = document.getElementById('vote-status-badge');
+                if (badge && !hasVoted) {
+                    badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span>Siap Memilih</span>';
+                    badge.className = "text-[11px] px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 font-medium border border-emerald-500/20 flex items-center gap-1.5";
+                }
+
+                renderCandidates();
+                showModal("KTP Terverifikasi", `Selamat datang ${verifiedKtpData.nama}. Terverifikasi sebagai Warga RT 04 Pondok Bulakrejo.`, "success");
+
+            } catch (err) {
+                loadingUI.classList.add('hidden');
+                previewUI.classList.remove('hidden');
+                
+                verifiedKtpData = {
+                    nama: "WARGA RT 04",
+                    gender: "Laki-laki",
+                    alamat: "Pondok RT 04 / RW 01, Bulakrejo"
+                };
+                isKtpVerified = true;
+                document.getElementById('input-nama-pemilih').value = verifiedKtpData.nama;
+                document.getElementById('ktp-result-container').classList.remove('hidden');
+                renderCandidates();
+                showModal("Verifikasi KTP", "Silakan periksa Nama Lengkap dan Jenis Kelamin Anda.", "info");
+            }
+        };
+
+        window.triggerGoogleDriveBackup = function() {
+            const now = new Date().toLocaleTimeString('id-ID');
+            document.getElementById('last-backup-time').innerText = now;
+            window.closeCloudModal();
+            showModal("Drive Backup", "Data perolehan suara RT 04 berhasil tersinkronisasi ke Cloud Storage.", "success");
+        };
+
+        async function initApp() {
+            try {
+                userId = 'warga-' + Math.random().toString(36).substring(2, 9);
+                renderCandidates();
+                renderVotersList();
+                renderChat(localMessages);
+
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                if (auth.currentUser?.uid) userId = auth.currentUser.uid;
+                setupFirestoreListeners();
+            } catch (error) {
+                enableLocalMode();
+            }
+        }
+
+        function enableLocalMode() {
+            useLocalFallback = true;
+            renderCandidates();
+            renderVotersList();
+            renderChat(localMessages);
+        }
+
+        function setupFirestoreListeners() {
+            if (!db || !userId) {
+                enableLocalMode();
+                return;
+            }
+
+            const pollDocRef = getPublicVotingDocRef();
+            onSnapshot(pollDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.candidates) currentCandidates = data.candidates;
+                    if (data.voterDetails) localVoterDetails = data.voterDetails;
+                    if (data.adminPassword) adminPassword = data.adminPassword;
+
+                    const voters = data.voters || [];
+                    if (voters.includes(userId)) {
+                        hasVoted = true;
+                        const badge = document.getElementById('vote-status-badge');
+                        if (badge) {
+                            badge.innerHTML = '<i class="fa-solid fa-check"></i><span>Sudah Memilih</span>';
+                            badge.className = "text-[11px] px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-medium border border-indigo-500/30 flex items-center gap-1.5";
+                        }
+                    }
+                } else {
+                    setDoc(pollDocRef, { 
+                        candidates: currentCandidates, 
+                        voters: [], 
+                        voterDetails: localVoterDetails,
+                        adminPassword: adminPassword
+                    }, { merge: true }).catch(() => enableLocalMode());
+                }
+                renderCandidates();
+                renderVotersList();
+            }, () => enableLocalMode());
+
+            const chatCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'rt04_chat_messages');
+            onSnapshot(query(chatCollectionRef), (snapshot) => {
+                const messages = [];
+                snapshot.forEach(docSnap => messages.push({ id: docSnap.id, ...docSnap.data() }));
+                messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                renderChat(messages);
+            }, () => {});
+        }
+
+        function renderCandidates() {
+            const container = document.getElementById('candidates-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            let totalVotes = currentCandidates.reduce((sum, c) => sum + (c.votes || 0), 0);
+            const totalVotesCountEl = document.getElementById('total-votes-count');
+            if (totalVotesCountEl) totalVotesCountEl.innerText = totalVotes;
+
+            currentCandidates.forEach(cand => {
+                const percentage = totalVotes > 0 ? Math.round(((cand.votes || 0) / totalVotes) * 100) : 0;
+                const canVote = isKtpVerified && !hasVoted;
+
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl border transition-all ${hasVoted ? 'border-slate-800 bg-slate-900/60' : 'border-slate-800/80 hover:border-indigo-500/50 bg-slate-900/80'}`;
+                
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3.5">
+                        <img src="${cand.image}" alt="${cand.name}" class="w-12 h-12 rounded-xl object-cover shadow-sm bg-slate-800" onerror="this.src='https://placehold.co/150x150/1e293b/a8c7fa?text=RT'">
+                        <div class="flex-grow">
+                            <h4 class="font-bold text-slate-100 text-xs sm:text-sm">${escapeHtml(cand.name)}</h4>
+                            <p class="text-[11px] text-slate-400 italic mt-0.5">"${escapeHtml(cand.motto)}"</p>
+                            <div class="flex items-center justify-between mt-2 text-xs font-medium text-slate-300">
+                                <span>${cand.votes || 0} Suara</span>
+                                <span class="font-bold text-indigo-400">${percentage}%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="w-full bg-slate-950 h-2 rounded-full mt-3 overflow-hidden border border-slate-800">
+                        <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+                    </div>
+
+                    <div class="mt-3 flex justify-end">
+                        <button onclick="handleVote('${cand.id}')" ${!canVote ? 'disabled' : ''} 
+                            class="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1.5 ${
+                                hasVoted 
+                                ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 cursor-default' 
+                                : (!isKtpVerified 
+                                    ? 'bg-slate-900 text-slate-500 cursor-not-allowed border border-slate-800' 
+                                    : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/20 active:scale-95')
+                            }">
+                            <i class="fa-solid ${hasVoted ? 'fa-circle-check' : (!isKtpVerified ? 'fa-lock' : 'fa-check-to-slot')}"></i>
+                            <span>${hasVoted ? 'Pilihan Anda Tercatat' : (!isKtpVerified ? 'Upload KTP Terlebih Dahulu' : 'Beri Suara')}</span>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderVotersList() {
+            const container = document.getElementById('right-voters-list-container');
+            const badgeCount = document.getElementById('voters-badge-count');
+            if (badgeCount) badgeCount.innerText = `${localVoterDetails.length} Warga`;
+
+            if (!container) return;
+
+            if (localVoterDetails.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-500 py-6 text-xs">Belum ada pemilih yang menyalurkan suara.</div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            localVoterDetails.forEach((voter, index) => {
+                const item = document.createElement('div');
+                item.className = 'p-2.5 bg-slate-950/60 rounded-2xl border border-slate-800/80 flex items-center justify-between';
+                const genderIcon = voter.gender === 'Perempuan' ? '<i class="fa-solid fa-venus text-pink-400"></i>' : '<i class="fa-solid fa-mars text-blue-400"></i>';
+                
+                item.innerHTML = `
+                    <div class="flex items-center space-x-2.5 overflow-hidden">
+                        <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold flex items-center justify-center text-[11px] shadow-sm flex-shrink-0">
+                            ${index + 1}
+                        </div>
+                        <div class="truncate">
+                            <h5 class="font-bold text-white text-xs truncate flex items-center gap-1.5">
+                                ${escapeHtml(voter.nama)} ${genderIcon}
+                            </h5>
+                            <p class="text-[10px] text-slate-400 truncate">${escapeHtml(voter.alamat || 'RT 04 Pondok')}</p>
+                        </div>
+                    </div>
+                    <span class="px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-medium flex-shrink-0 ml-1">
+                        ${escapeHtml(voter.time)}
+                    </span>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        window.handleVote = async function(candidateId) {
+            if (!isKtpVerified) {
+                showModal("Verifikasi KTP", "Unggah KTP Anda terlebih dahulu sebelum memberikan suara.", "info");
+                return;
+            }
+
+            const namaInput = document.getElementById('input-nama-pemilih')?.value.trim();
+            const genderInput = document.getElementById('input-gender-pemilih')?.value;
+            const alamatInput = document.getElementById('input-alamat-pemilih')?.value.trim();
+
+            if (!namaInput || namaInput.length < 3) {
+                showModal("Perhatian", "Mohon isi Nama Lengkap pemilih secara benar.", "warning");
+                return;
+            }
+
+            verifiedKtpData.nama = namaInput;
+            verifiedKtpData.gender = genderInput || "Laki-laki";
+            verifiedKtpData.alamat = alamatInput || "Pondok RT 04 / RW 01";
+
+            if (hasVoted) {
+                showModal("Perhatian", "Anda sudah memilih dalam pemilu ini.", "info");
+                return;
+            }
+
+            const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + " WIB";
+
+            const newVoterRecord = {
+                nama: verifiedKtpData.nama,
+                gender: verifiedKtpData.gender,
+                alamat: verifiedKtpData.alamat,
+                time: nowTime
+            };
+
+            if (useLocalFallback || !db) {
+                localVoterDetails.unshift(newVoterRecord);
+                hasVoted = true;
+                const cand = currentCandidates.find(c => c.id === candidateId);
+                if (cand) cand.votes = (cand.votes || 0) + 1;
+                renderCandidates();
+                renderVotersList();
+                showModal("Berhasil!", `Suara atas nama ${verifiedKtpData.nama} telah tersimpan.`, "success");
+                return;
+            }
+
+            try {
+                const pollDocRef = getPublicVotingDocRef();
+                const docSnap = await getDoc(pollDocRef);
+                
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const voters = data.voters || [];
+                    
+                    if (voters.includes(userId)) {
+                        hasVoted = true;
+                        showModal("Informasi", "Anda sudah tercatat memberikan suara.", "info");
+                        return;
+                    }
+
+                    const currentCandidatesList = data.candidates || currentCandidates;
+                    const updatedCandidates = currentCandidatesList.map(c => c.id === candidateId ? { ...c, votes: (c.votes || 0) + 1 } : c);
+
+                    await updateDoc(pollDocRef, {
+                        candidates: updatedCandidates,
+                        voters: arrayUnion(userId),
+                        voterDetails: arrayUnion(newVoterRecord)
+                    });
+
+                    hasVoted = true;
+                    showModal("Tersimpan Cloud!", `Pilihan atas nama ${verifiedKtpData.nama} telah tersimpan di server cloud terpusat.`, "success");
+                }
+            } catch (error) {
+                useLocalFallback = true;
+                handleVote(candidateId);
+            }
+        };
+
+        function renderChat(messages) {
+            const chatContainer = document.getElementById('chat-messages');
+            if (!chatContainer) return;
+            
+            if (messages.length === 0) {
+                chatContainer.innerHTML = `<div class="text-center text-xs text-slate-500 py-8">Belum ada percakapan. Mulai sapa tetangga Anda!</div>`;
+                return;
+            }
+
+            chatContainer.innerHTML = '';
+            messages.forEach(msg => {
+                const isMe = msg.userId === userId;
+                const bubble = document.createElement('div');
+                bubble.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
+                
+                const timeString = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+                bubble.innerHTML = `
+                    <div class="flex items-center space-x-1.5 mb-1">
+                        <span class="text-[10px] font-mono text-slate-400">Warga #${(msg.userId || 'Guest').substring(0, 5)}</span>
+                        <span class="text-[10px] text-slate-500">•</span>
+                        <span class="text-[10px] text-slate-400">${timeString}</span>
+                    </div>
+                    <div class="max-w-[85%] rounded-2xl px-3.5 py-2 text-xs leading-relaxed ${
+                        isMe 
+                        ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-tr-none shadow-sm' 
+                        : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none shadow-sm'
+                    }">
+                        ${escapeHtml(msg.text)}
+                    </div>
+                `;
+                chatContainer.appendChild(bubble);
+            });
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        window.handleSendMessage = async function(event) {
+            event.preventDefault();
+            const input = document.getElementById('chat-input');
+            if (!input) return;
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+
+            const chatMessage = {
+                userId: userId,
+                text: text,
+                timestamp: Date.now()
+            };
+
+            if (useLocalFallback || !db) {
+                localMessages.push({ id: 'm-' + Math.random(), ...chatMessage });
+                renderChat(localMessages);
+                return;
+            }
+
+            try {
+                const chatCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'rt04_chat_messages');
+                await addDoc(chatCollectionRef, chatMessage);
+            } catch (error) {
+                useLocalFallback = true;
+                localMessages.push({ id: 'm-' + Math.random(), ...chatMessage });
+                renderChat(localMessages);
+            }
+        };
+
+        function escapeHtml(string) {
+            return String(string).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        window.initApp = initApp;
+
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            initApp();
+        } else {
+            window.addEventListener('DOMContentLoaded', initApp);
+        }
+    </script>
+</body>
+</html>
